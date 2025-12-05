@@ -1,7 +1,12 @@
 import express, { Request, Response } from 'express'
+import { userRoutes } from './modules/users/users.route';
+import initDB from './DB/db';
 const app = express();
 // parser
 app.use(express.json())
+
+// initialize database
+initDB();
 
 
 // Root Route
@@ -12,6 +17,8 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+// Users Routes
+app.use("/api/v1/auth", userRoutes)
 
 
 
@@ -25,9 +32,5 @@ app.use((req, res) => {
     path: req.path,
   });
 });
-
-app.listen(5000,()=>{
-    console.log("this app is runnding on port 5000")
-})
 
 export default  app;
