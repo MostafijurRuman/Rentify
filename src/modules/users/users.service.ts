@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../../DB/db";
+import jwt from "jsonwebtoken";
+import config from "../../config/config";
 
+// SignUp User business logic
 const signupUser = async (
   name: string,
   email: string,
@@ -37,6 +40,47 @@ const signupUser = async (
   return result;
 };
 
+
+
+
+// SignIn User business logic
+const signInUser = async (email: string, password: string) => {
+  if (!email || !password) {
+    throw new Error("Email and password are required");
+  }
+
+  const normalizedEmail = email.toLowerCase();
+
+  const result = await pool.query(
+    `SELECT * FROM users WHERE email = $1`,
+    [normalizedEmail]
+  );
+
+  if (result.rowCount === 0) {
+    throw new Error("Invalid email or password");
+  }
+
+  const user = result.rows[0];
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    throw new Error("Invalid email or password");
+  }
+
+  const { password: _password,created_at:khulesi, ...safeUser  } = user;
+
+  const token = jwt.sign(safeUser,config.access_secret as string,{ expiresIn: "1d" } )
+  
+  const userWithToken = {
+    "token":token,
+    "user": safeUser
+    
+  }
+  return userWithToken;
+};
+
+
 export const userServices = {
   signupUser,
+  signInUser
 };

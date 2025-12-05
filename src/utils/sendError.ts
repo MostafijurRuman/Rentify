@@ -1,10 +1,13 @@
 import { Response } from "express";
 
 export const sendError = (res: Response, err: any) => {
-  console.error("🔥 Error:", err);
+  const statusCode = err?.statusCode || err?.status || 500;
+  const message = err?.message || "Internal Server Error";
 
-  res.status(500).json({
+  console.error("API Error:", err);
+
+  res.status(statusCode).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message,
   });
 };
