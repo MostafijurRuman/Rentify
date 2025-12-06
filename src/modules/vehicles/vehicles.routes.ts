@@ -6,7 +6,8 @@ import { requireAdmin } from "../../middlewares/requireAdmin";
 const router =express.Router();
 
 // Vehicles CRUD Here..
-router.post("/vehicles" , requireAuth,requireAdmin, vehiclesController.createVehicle)
+router.post("/vehicles" , requireAuth,requireAdmin, vehiclesController.createVehicle);
+router.get("/vehicles",vehiclesController.getAllVehicles)
 
 
 export const vehiclesRoutes = router;

@@ -1,3 +1,4 @@
+import { Result } from 'pg';
 import { pool } from '../../DB/db';
 
 type VehicleType = 'car' | 'bike' | 'van' | 'SUV';
@@ -65,6 +66,12 @@ const createVehicles = async (
   return insertedVehicle.rows[0];
 };
 
+const getAllVehicles = async ()=>{
+    const result = await pool.query(`SELECT *  FROM vehicles; `);
+    return result;
+}
+
 export const vehicleServices = {
   createVehicles,
+  getAllVehicles
 };
