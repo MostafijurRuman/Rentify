@@ -2,6 +2,13 @@ import { pool } from '../../DB/db';
 
 type VehicleType = 'car' | 'bike' | 'van' | 'SUV';
 type VehicleAvailability = 'available' | 'booked';
+type UpdateVehiclePayload = {
+  vehicle_name?: string;
+  type?: VehicleType;
+  registration_number?: string;
+  daily_rent_price?: number;
+  availability_status?: VehicleAvailability;
+};
 
 const allowedTypes: VehicleType[] = ['car', 'bike', 'van', 'SUV'];
 const allowedStatuses: VehicleAvailability[] = ['available', 'booked'];
@@ -83,8 +90,94 @@ const getVehicleById = async (id: number) => {
   return result.rows[0];
 };
 
+const updateVehicle = async (id: number, payload: UpdateVehiclePayload) => {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Invalid vehicle id');
+  }
+
+  const existing = await getVehicleById(id);
+  if (!existing) {
+    return null;
+  }
+
+  const updates: string[] = [];
+  const values: (string | number)[] = [];
+  let paramIndex = 1;
+
+  if (payload.vehicle_name !== undefined) {
+    const trimmedName = payload.vehicle_name?.trim();
+    if (!trimmedName) {
+      throw new Error('vehicle_name cannot be empty');
+    }
+    updates.push(`vehicle_name = $${paramIndex++}`);
+    values.push(trimmedName);
+  }
+
+  if (payload.type !== undefined) {
+    if (!allowedTypes.includes(payload.type)) {
+      throw new Error("type must be one of: 'car', 'bike', 'van', 'SUV'");
+    }
+    updates.push(`type = $${paramIndex++}`);
+    values.push(payload.type);
+  }
+
+  if (payload.registration_number !== undefined) {
+    const normalizedRegistration = payload.registration_number?.trim();
+    if (!normalizedRegistration) {
+      throw new Error('registration_number cannot be empty');
+    }
+
+    const registrationExists = await pool.query(
+      'SELECT 1 FROM vehicles WHERE registration_number = $1 AND id <> $2 LIMIT 1',
+      [normalizedRegistration, id]
+    );
+    if (registrationExists.rows.length > 0) {
+      throw new Error('registration_number must be unique');
+    }
+
+    updates.push(`registration_number = $${paramIndex++}`);
+    values.push(normalizedRegistration);
+  }
+
+  if (payload.daily_rent_price !== undefined) {
+    if (
+      typeof payload.daily_rent_price !== 'number' ||
+      Number.isNaN(payload.daily_rent_price) ||
+      payload.daily_rent_price <= 0
+    ) {
+      throw new Error('daily_rent_price must be a positive number');
+    }
+    updates.push(`daily_rent_price = $${paramIndex++}`);
+    values.push(payload.daily_rent_price);
+  }
+
+  if (payload.availability_status !== undefined) {
+    if (!allowedStatuses.includes(payload.availability_status)) {
+      throw new Error("availability_status must be either 'available' or 'booked'");
+    }
+    updates.push(`availability_status = $${paramIndex++}`);
+    values.push(payload.availability_status);
+  }
+
+  if (updates.length === 0) {
+    return existing;
+  }
+
+  const updateQuery = `
+    UPDATE vehicles
+    SET ${updates.join(', ')}
+    WHERE id = $${paramIndex}
+    RETURNING *
+  `;
+
+  values.push(id);
+  const updated = await pool.query(updateQuery, values);
+  return updated.rows[0];
+};
+
 export const vehicleServices = {
   createVehicles,
   getAllVehicles,
   getVehicleById,
+  updateVehicle
 };
