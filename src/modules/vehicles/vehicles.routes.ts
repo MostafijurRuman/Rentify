@@ -10,6 +10,6 @@ router.post("/vehicles" , requireAuth,requireAdmin, vehiclesController.createVeh
 router.get("/vehicles",vehiclesController.getAllVehicles)
 router.get("/vehicles/:vehicleId", vehiclesController.getVehicleById)
 router.put("/vehicles/:vehicleId", requireAuth, requireAdmin, vehiclesController.updateVehicle)
-
+router.delete("/vehicles/:vehicleId", requireAuth, requireAdmin, vehiclesController.deleteVehicle)
 
 export const vehiclesRoutes = router;

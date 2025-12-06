@@ -1,3 +1,4 @@
+import { error } from 'console';
 import { pool } from '../../DB/db';
 
 type VehicleType = 'car' | 'bike' | 'van' | 'SUV';
@@ -81,7 +82,6 @@ const getVehicleById = async (id: number) => {
   if (!Number.isInteger(id) || id <= 0) {
     throw new Error('Invalid vehicle id');
   }
-
   const result = await pool.query('SELECT * FROM vehicles WHERE id = $1 LIMIT 1', [id]);
   if (result.rows.length === 0) {
     return null;
@@ -175,9 +175,27 @@ const updateVehicle = async (id: number, payload: UpdateVehiclePayload) => {
   return updated.rows[0];
 };
 
+const deleteVehicle = async (id: number) => {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Invalid vehicle id');
+  }
+
+  const existing = await getVehicleById(id);
+  if (!existing) {
+    throw new Error("This vehicle doesn't exits");
+  }
+  if(existing.availability_status === "booked"){
+    throw new Error("You can't delete it , this is booked by customer")
+  }
+
+  await pool.query('DELETE FROM vehicles WHERE id = $1', [id]);
+  return existing;
+};
+
 export const vehicleServices = {
   createVehicles,
   getAllVehicles,
   getVehicleById,
-  updateVehicle
+  updateVehicle,
+  deleteVehicle
 };
