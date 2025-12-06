@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
-import { userRoutes } from './modules/auth/auth.route';
+import { authRoutes} from './modules/auth/auth.route';
 import { vehiclesRoutes } from './modules/vehicles/vehicles.routes';
+import { usersRouter } from './modules/users/users.routes';
 
 const app = express();
 
@@ -16,10 +17,12 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// Users Routes
-app.use('/api/v1/auth', userRoutes);
+// Auth Routes
+app.use('/api/v1/auth',authRoutes);
 // Vehicles Routes
 app.use('/api/v1', vehiclesRoutes);
+// Users Routes
+app.use("/api/v1/users", usersRouter)
 
 // 404 Routes
 app.use((req, res) => {
