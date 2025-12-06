@@ -1,4 +1,3 @@
-import { Result } from 'pg';
 import { pool } from '../../DB/db';
 
 type VehicleType = 'car' | 'bike' | 'van' | 'SUV';
@@ -66,12 +65,26 @@ const createVehicles = async (
   return insertedVehicle.rows[0];
 };
 
-const getAllVehicles = async ()=>{
-    const result = await pool.query(`SELECT *  FROM vehicles; `);
-    return result;
-}
+const getAllVehicles = async () => {
+  const result = await pool.query('SELECT * FROM vehicles ORDER BY id ASC');
+  return result.rows;
+};
+
+const getVehicleById = async (id: number) => {
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new Error('Invalid vehicle id');
+  }
+
+  const result = await pool.query('SELECT * FROM vehicles WHERE id = $1 LIMIT 1', [id]);
+  if (result.rows.length === 0) {
+    return null;
+  }
+
+  return result.rows[0];
+};
 
 export const vehicleServices = {
   createVehicles,
-  getAllVehicles
+  getAllVehicles,
+  getVehicleById,
 };

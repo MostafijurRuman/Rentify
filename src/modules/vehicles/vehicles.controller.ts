@@ -33,22 +33,24 @@ const createVehicle = async(req: Request, res: Response) =>{
 
 }
 
-const getAllVehicles = async(req:Request , res: Response) =>{
-    try {
-        const result = await vehicleServices.getAllVehicles();
-        if(result.rows.length <= 0){
-            return res.status(200).json({
-                "success": true,
-                "message": "No vehicles found",
-                "data": [] 
-            })
-        }
-       return res.status(200).json({
-            "success": true,
-            "message": "Vehicles retrieved successfully",
-            "data": result.rows
-        })
-    } catch (error: any) {
+const getAllVehicles = async (req: Request, res: Response) => {
+  try {
+    const vehicles = await vehicleServices.getAllVehicles();
+
+    if (vehicles.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No vehicles found',
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Vehicles retrieved successfully',
+      data: vehicles,
+    });
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -57,7 +59,43 @@ const getAllVehicles = async(req:Request , res: Response) =>{
 
 }
 
-export const vehiclesController ={
-    createVehicle,
-    getAllVehicles
-}
+const getVehicleById = async (req: Request, res: Response) => {
+  try {
+    const idParam = req.params.vehicleId;
+    const id = Number(idParam);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'vehicleId must be a positive integer',
+      });
+    }
+
+    const vehicle = await vehicleServices.getVehicleById(id);
+
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vehicle not found',
+        data:[]
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Vehicle retrieved successfully',
+      data: vehicle,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const vehiclesController = {
+  createVehicle,
+  getAllVehicles,
+  getVehicleById,
+};

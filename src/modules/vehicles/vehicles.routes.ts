@@ -8,6 +8,7 @@ const router =express.Router();
 // Vehicles CRUD Here..
 router.post("/vehicles" , requireAuth,requireAdmin, vehiclesController.createVehicle);
 router.get("/vehicles",vehiclesController.getAllVehicles)
+router.get("/vehicles/:vehicleId", vehiclesController.getVehicleById)
 
 
 export const vehiclesRoutes = router;
