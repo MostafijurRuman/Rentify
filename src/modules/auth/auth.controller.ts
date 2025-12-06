@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { sendError } from "../../utils/sendError";
-import { userServices } from "./users.service";
+import { userServices } from "./auth.service";
 
 // SignUp User Controller
 const signupUser = async(req:Request,res:Response) =>{

@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import { userRoutes } from './modules/users/users.route';
+import { userRoutes } from './modules/auth/auth.route';
 import initDB from './DB/db';
 const app = express();
 // parser
