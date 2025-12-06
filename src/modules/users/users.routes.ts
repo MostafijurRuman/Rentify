@@ -8,6 +8,8 @@ const router = Router();
 // Users CRUD Here 
 
 router.get("/",requireAuth,requireAdmin, usersController.getAllUsers)
+router.put("/:userId", requireAuth, usersController.updateUser)
+router.delete("/:userId", requireAuth, requireAdmin, usersController.deleteUser)
 
 
 export const usersRouter = router;
