@@ -59,7 +59,54 @@ const getBookings = async (req: Request, res: Response) => {
   }
 };
 
+const updateBooking = async (req: Request, res: Response) => {
+  try {
+    const authUser = req.user;
+
+    if (!authUser || (authUser.role !== 'customer' && authUser.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: only customers or admins can update bookings',
+      });
+    }
+
+    const bookingIdParam = Number(req.params.bookingId);
+    if (!Number.isInteger(bookingIdParam) || bookingIdParam <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'bookingId must be a positive integer',
+      });
+    }
+
+    const requestedStatus = req.body?.status;
+    if (typeof requestedStatus !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'status is required',
+      });
+    }
+
+    const normalizedStatus = requestedStatus.trim().toLowerCase();
+
+    const result = await bookingServices.updateBookingStatus(
+      bookingIdParam,
+      normalizedStatus as any,
+      Number(authUser.id),
+      authUser.role
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result.booking,
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
 export const bookingsControllers = {
   createBooking,
   getBookings,
+  updateBooking,
 };

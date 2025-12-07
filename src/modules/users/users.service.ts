@@ -113,7 +113,13 @@ const deleteUser = async (id: number) => {
     return null;
   }
 
-  // TODO: enforce booking check when bookings table & relations are available
+  const bookingExists = await pool.query(
+    "SELECT 1 FROM bookings WHERE customer_id = $1 AND status = 'active' LIMIT 1",
+    [id]
+  );
+  if (bookingExists.rows.length > 0) {
+    throw new Error('Cannot delete user with existing bookings');
+  }
   const result = await pool.query(
     `DELETE FROM users WHERE id = $1 RETURNING ${safeUserSelect}`,
     [id]
