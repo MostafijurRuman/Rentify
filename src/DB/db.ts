@@ -27,9 +27,38 @@ const initDB = async () => {
       availability_status VARCHAR(15) NOT NULL CHECK (availability_status IN ('available', 'booked'))
     );
   `;
+    const bookingTableQuery = `
+    CREATE TABLE IF NOT EXISTS bookings (
+      id SERIAL PRIMARY KEY,
+
+      customer_id INT NOT NULL,
+      vehicle_id INT NOT NULL,
+
+      rent_start_date DATE NOT NULL,
+      rent_end_date DATE NOT NULL,
+
+      total_price NUMERIC(10, 2) NOT NULL CHECK (total_price > 0),
+
+      status VARCHAR(20) NOT NULL CHECK (status IN ('active', 'cancelled', 'returned')),
+
+      CONSTRAINT fk_customer
+        FOREIGN KEY (customer_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+      CONSTRAINT fk_vehicle
+        FOREIGN KEY (vehicle_id)
+        REFERENCES vehicles(id)
+        ON DELETE CASCADE,
+
+      CONSTRAINT valid_rent_dates
+        CHECK (rent_end_date > rent_start_date)
+    );
+  `;
 
   await pool.query(userTableQuery);
   await pool.query(vehicleTableQuery);
+  await pool.query(bookingTableQuery);
 };
 
 export default initDB;

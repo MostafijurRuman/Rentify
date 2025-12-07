@@ -6,10 +6,10 @@ import { requireAdmin } from "../../middlewares/requireAdmin";
 const router =express.Router();
 
 // Vehicles CRUD Here..
-router.post("/vehicles" , requireAuth,requireAdmin, vehiclesController.createVehicle);
-router.get("/vehicles",vehiclesController.getAllVehicles)
-router.get("/vehicles/:vehicleId", vehiclesController.getVehicleById)
-router.put("/vehicles/:vehicleId", requireAuth, requireAdmin, vehiclesController.updateVehicle)
-router.delete("/vehicles/:vehicleId", requireAuth, requireAdmin, vehiclesController.deleteVehicle)
+router.post("/" , requireAuth,requireAdmin, vehiclesController.createVehicle);
+router.get("/",vehiclesController.getAllVehicles)
+router.get("/:vehicleId", vehiclesController.getVehicleById)
+router.put("/:vehicleId", requireAuth, requireAdmin, vehiclesController.updateVehicle)
+router.delete("/:vehicleId", requireAuth, requireAdmin, vehiclesController.deleteVehicle)
 
 export const vehiclesRoutes = router;

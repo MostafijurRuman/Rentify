@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { authRoutes} from './modules/auth/auth.route';
 import { vehiclesRoutes } from './modules/vehicles/vehicles.routes';
 import { usersRouter } from './modules/users/users.routes';
+import { bookingsRoutes } from './modules/bookings/bookings.routes';
 
 const app = express();
 
@@ -20,9 +21,11 @@ app.get("/", (req: Request, res: Response) => {
 // Auth Routes
 app.use('/api/v1/auth',authRoutes);
 // Vehicles Routes
-app.use('/api/v1', vehiclesRoutes);
+app.use('/api/v1/vehicles', vehiclesRoutes);
 // Users Routes
 app.use("/api/v1/users", usersRouter)
+// Bookings Routes
+app.use("/api/v1/bookings", bookingsRoutes)
 
 // 404 Routes
 app.use((req, res) => {
