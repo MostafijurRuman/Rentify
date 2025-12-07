@@ -6,7 +6,14 @@ const createBooking = async (req: Request, res: Response) => {
   try {
     const authUser = req.user;
 
-    if (!authUser || (authUser.role !== 'customer' && authUser.role !== 'admin')) {
+    if (!authUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    if (authUser.role !== 'customer' && authUser.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: only customers or admins can create bookings',
@@ -40,7 +47,14 @@ const getBookings = async (req: Request, res: Response) => {
   try {
     const authUser = req.user;
 
-    if (!authUser || (authUser.role !== 'customer' && authUser.role !== 'admin')) {
+    if (!authUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    if (authUser.role !== 'customer' && authUser.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: only customers or admins can view bookings',
@@ -63,7 +77,14 @@ const updateBooking = async (req: Request, res: Response) => {
   try {
     const authUser = req.user;
 
-    if (!authUser || (authUser.role !== 'customer' && authUser.role !== 'admin')) {
+    if (!authUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    if (authUser.role !== 'customer' && authUser.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden: only customers or admins can update bookings',

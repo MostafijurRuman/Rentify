@@ -1,6 +1,12 @@
 
 import { PoolClient } from 'pg';
 import { pool } from '../../DB/db';
+
+const httpError = (message: string, status: number) => {
+  const error = new Error(message);
+  (error as any).status = status;
+  return error;
+};
 type BookingStatus = 'active' | 'cancelled' | 'returned';
 type CreateBookingPayload = {
   customer_id: number;
@@ -12,18 +18,18 @@ type CreateBookingPayload = {
 const parsePositiveInt = (value: unknown, fieldName: string) => {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${fieldName} must be a positive integer`);
+    throw httpError(`${fieldName} must be a positive integer`, 400);
   }
   return parsed;
 };
 
 const parseDate = (value: unknown, fieldName: string) => {
   if (!value) {
-    throw new Error(`${fieldName} is required`);
+    throw httpError(`${fieldName} is required`, 400);
   }
   const parsed = new Date(value as string);
   if (Number.isNaN(parsed.getTime())) {
-    throw new Error(`${fieldName} must be a valid date`);
+    throw httpError(`${fieldName} must be a valid date`, 400);
   }
   return parsed;
 };
@@ -51,11 +57,11 @@ const createBooking = async (payload: CreateBookingPayload) => {
   normalizedStart.setHours(0, 0, 0, 0);
 
   if (normalizedStart < today) {
-    throw new Error('rent_start_date cannot be in the past');
+    throw httpError('rent_start_date cannot be in the past', 400);
   }
 
   if (rentEndDate <= rentStartDate) {
-    throw new Error('rent_end_date must be later than rent_start_date');
+    throw httpError('rent_end_date must be later than rent_start_date', 400);
   }
 
   const millisecondsPerDay = 24 * 60 * 60 * 1000;
@@ -75,12 +81,12 @@ const createBooking = async (payload: CreateBookingPayload) => {
     );
 
     if (customerResult.rowCount === 0) {
-      throw new Error('Customer not found');
+      throw httpError('Customer not found', 404);
     }
 
     const customerRole = customerResult.rows[0].role;
     if (customerRole !== 'customer' && customerRole !== 'admin') {
-      throw new Error('Customer is not allowed to create bookings');
+      throw httpError('Customer is not allowed to create bookings', 403);
     }
 
     const vehicleResult = await client.query(
@@ -92,12 +98,12 @@ const createBooking = async (payload: CreateBookingPayload) => {
     );
 
     if (vehicleResult.rowCount === 0) {
-      throw new Error('Vehicle not found');
+      throw httpError('Vehicle not found', 404);
     }
 
     const vehicle = vehicleResult.rows[0];
     if (vehicle.availability_status !== 'available') {
-      throw new Error('Vehicle is not available for booking');
+      throw httpError('Vehicle is not available for booking', 400);
     }
 
     const dailyRate = Number(vehicle.daily_rent_price);
@@ -260,7 +266,7 @@ const updateBookingStatus = async (
   const normalizedStatus = requestedStatus.trim().toLowerCase() as BookingStatus;
 
   if (!allowedStatuses.includes(normalizedStatus)) {
-    throw new Error("status must be either 'cancelled' or 'returned'");
+    throw httpError("status must be either 'cancelled' or 'returned'", 400);
   }
 
   const client = await pool.connect();
@@ -273,7 +279,7 @@ const updateBookingStatus = async (
     );
 
     if (bookingResult.rowCount === 0) {
-      throw new Error('Booking not found');
+      throw httpError('Booking not found', 404);
     }
 
     let booking = bookingResult.rows[0];
@@ -281,21 +287,21 @@ const updateBookingStatus = async (
 
     if (authRole === 'customer') {
       if (booking.customer_id !== userId) {
-        throw new Error('You can only update your own bookings');
+        throw httpError('You can only update your own bookings', 403);
       }
 
       if (normalizedStatus !== 'cancelled') {
-        throw new Error('Customers can only cancel bookings');
+        throw httpError('Customers can only cancel bookings', 403);
       }
 
       if (booking.status !== 'active') {
-        throw new Error('Only active bookings can be cancelled');
+        throw httpError('Only active bookings can be cancelled', 400);
       }
 
       const now = normalizeDate(new Date());
       const startDate = normalizeDate(new Date(booking.rent_start_date));
       if (now.getTime() >= startDate.getTime()) {
-        throw new Error('You can only cancel before the booking start date');
+        throw httpError('You can only cancel before the booking start date', 400);
       }
 
       const cancellation = await client.query(
@@ -331,11 +337,11 @@ const updateBookingStatus = async (
 
     if (authRole === 'admin') {
       if (normalizedStatus !== 'returned') {
-        throw new Error("Admins can only mark bookings as 'returned'");
+        throw httpError("Admins can only mark bookings as 'returned'", 403);
       }
 
       if (booking.status === 'cancelled') {
-        throw new Error('Cancelled bookings cannot be marked as returned');
+        throw httpError('Cancelled bookings cannot be marked as returned', 400);
       }
 
       if (booking.status === 'returned') {
@@ -391,7 +397,7 @@ const updateBookingStatus = async (
       };
     }
 
-    throw new Error('Unauthorized role for updating bookings');
+    throw httpError('Unauthorized role for updating bookings', 403);
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

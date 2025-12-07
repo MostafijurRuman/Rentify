@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
 import { vehicleServices } from "./vehicles.service";
 
+const handleVehicleError = (res: Response, error: any) => {
+  const status = error?.status || 500;
+  res.status(status).json({
+    success: false,
+    message: error?.message || 'Internal Server Error',
+  });
+};
+
 const createVehicle = async(req: Request, res: Response) =>{
     try {
     const {
@@ -24,10 +32,7 @@ const createVehicle = async(req: Request, res: Response) =>{
       data: result,
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    handleVehicleError(res, error);
   }
 
 
@@ -51,10 +56,7 @@ const getAllVehicles = async (req: Request, res: Response) => {
       data: vehicles,
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    handleVehicleError(res, error);
   }
 
 }
@@ -87,10 +89,7 @@ const getVehicleById = async (req: Request, res: Response) => {
       data: vehicle,
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    handleVehicleError(res, error);
   }
 };
 
@@ -122,10 +121,7 @@ const updateVehicle = async (req: Request, res: Response) => {
       data: updatedVehicle,
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    handleVehicleError(res, error);
   }
 };
 
@@ -155,10 +151,7 @@ const deleteVehicle = async (req: Request, res: Response) => {
       message: 'Vehicle deleted successfully',
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    handleVehicleError(res, error);
   }
 };
 

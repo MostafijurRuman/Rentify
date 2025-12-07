@@ -1,5 +1,11 @@
 import { pool } from "../../DB/db";
 
+const httpError = (message: string, status: number) => {
+  const error = new Error(message);
+  (error as any).status = status;
+  return error;
+};
+
 type UserRole = 'admin' | 'customer';
 type UpdateUserPayload = {
   name?: string;
@@ -17,7 +23,7 @@ const getAllUsers = async () => {
 
 const getUserById = async (id: number) => {
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error('Invalid user id');
+    throw httpError('Invalid user id', 400);
   }
 
   const result = await pool.query(`SELECT ${safeUserSelect} FROM users WHERE id = $1 LIMIT 1`, [id]);
@@ -30,7 +36,7 @@ const getUserById = async (id: number) => {
 
 const updateUser = async (id: number, payload: UpdateUserPayload) => {
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error('Invalid user id');
+    throw httpError('Invalid user id', 400);
   }
 
   const existingUser = await getUserById(id);
@@ -45,7 +51,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
   if (payload.name !== undefined) {
     const trimmedName = payload.name.trim();
     if (!trimmedName) {
-      throw new Error('name cannot be empty');
+      throw httpError('name cannot be empty', 400);
     }
     updates.push(`name = $${paramIndex++}`);
     values.push(trimmedName);
@@ -54,7 +60,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
   if (payload.email !== undefined) {
     const normalizedEmail = payload.email.trim().toLowerCase();
     if (!normalizedEmail) {
-      throw new Error('email cannot be empty');
+      throw httpError('email cannot be empty', 400);
     }
 
     const emailExists = await pool.query(
@@ -62,7 +68,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
       [normalizedEmail, id]
     );
     if (emailExists.rows.length > 0) {
-      throw new Error('Email already in use');
+      throw httpError('Email already in use', 400);
     }
 
     updates.push(`email = $${paramIndex++}`);
@@ -72,7 +78,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
   if (payload.phone !== undefined) {
     const trimmedPhone = payload.phone.trim();
     if (!trimmedPhone) {
-      throw new Error('phone cannot be empty');
+      throw httpError('phone cannot be empty', 400);
     }
     updates.push(`phone = $${paramIndex++}`);
     values.push(trimmedPhone);
@@ -80,7 +86,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
 
   if (payload.role !== undefined) {
     if (payload.role !== 'admin' && payload.role !== 'customer') {
-      throw new Error("role must be either 'admin' or 'customer'");
+      throw httpError("role must be either 'admin' or 'customer'", 400);
     }
     updates.push(`role = $${paramIndex++}`);
     values.push(payload.role);
@@ -105,7 +111,7 @@ const updateUser = async (id: number, payload: UpdateUserPayload) => {
 
 const deleteUser = async (id: number) => {
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error('Invalid user id');
+    throw httpError('Invalid user id', 400);
   }
 
   const existingUser = await getUserById(id);
@@ -118,7 +124,7 @@ const deleteUser = async (id: number) => {
     [id]
   );
   if (bookingExists.rows.length > 0) {
-    throw new Error('Cannot delete user with existing bookings');
+    throw httpError('Cannot delete user with existing bookings', 400);
   }
   const result = await pool.query(
     `DELETE FROM users WHERE id = $1 RETURNING ${safeUserSelect}`,
