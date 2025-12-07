@@ -36,6 +36,30 @@ const createBooking = async (req: Request, res: Response) => {
   }
 };
 
+const getBookings = async (req: Request, res: Response) => {
+  try {
+    const authUser = req.user;
+
+    if (!authUser || (authUser.role !== 'customer' && authUser.role !== 'admin')) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: only customers or admins can view bookings',
+      });
+    }
+
+    const bookings = await bookingServices.getBookingsByRole(Number(authUser.id), authUser.role);
+
+    return res.status(200).json({
+      success: true,
+      message: authUser.role === 'admin' ? 'Bookings retrieved successfully' : 'Your bookings retrieved successfully',
+      data: bookings,
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
 export const bookingsControllers = {
   createBooking,
+  getBookings,
 };

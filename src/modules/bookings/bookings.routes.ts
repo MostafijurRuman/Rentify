@@ -6,6 +6,7 @@ const router = Router();
 
 // Booking routes here
 router.post("/", requireAuth, bookingsControllers.createBooking)
+router.get("/", requireAuth, bookingsControllers.getBookings)
 
 
 export const bookingsRoutes = router;

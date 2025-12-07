@@ -26,6 +26,11 @@ const parseDate = (value: unknown, fieldName: string) => {
   return parsed;
 };
 
+const formatDate = (dateValue: Date | string) => {
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  return date.toISOString().split('T')[0];
+};
+
 const createBooking = async (payload: CreateBookingPayload) => {
   const customerId = parsePositiveInt(payload.customer_id, 'customer_id');
   const vehicleId = parsePositiveInt(payload.vehicle_id, 'vehicle_id');
@@ -118,11 +123,6 @@ const createBooking = async (payload: CreateBookingPayload) => {
 
     const booking = result.rows[0];
 
-    const formatDate = (dateValue: Date | string) => {
-      const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-      return date.toISOString().split('T')[0];
-    };
-
     return {
       ...booking,
       rent_start_date: formatDate(booking.rent_start_date),
@@ -141,6 +141,82 @@ const createBooking = async (payload: CreateBookingPayload) => {
   }
 };
 
+const getBookingsByRole = async (userId: number, role: string) => {
+  const parsedUserId = parsePositiveInt(userId, 'userId');
+  if (role === 'admin') {
+    const adminQuery = `
+      SELECT
+        b.id,
+        b.customer_id,
+        b.vehicle_id,
+        b.rent_start_date,
+        b.rent_end_date,
+        b.total_price,
+        b.status,
+        u.name AS customer_name,
+        u.email AS customer_email,
+        v.vehicle_name,
+        v.registration_number
+      FROM bookings b
+      INNER JOIN users u ON u.id = b.customer_id
+      INNER JOIN vehicles v ON v.id = b.vehicle_id
+      ORDER BY b.id DESC
+    `;
+
+    const result = await pool.query(adminQuery);
+    return result.rows.map((row) => ({
+      id: row.id,
+      customer_id: row.customer_id,
+      vehicle_id: row.vehicle_id,
+      rent_start_date: formatDate(row.rent_start_date),
+      rent_end_date: formatDate(row.rent_end_date),
+      total_price: Number(row.total_price),
+      status: row.status,
+      customer: {
+        name: row.customer_name,
+        email: row.customer_email,
+      },
+      vehicle: {
+        vehicle_name: row.vehicle_name,
+        registration_number: row.registration_number,
+      },
+    }));
+  }
+
+  const customerQuery = `
+    SELECT
+      b.id,
+      b.vehicle_id,
+      b.rent_start_date,
+      b.rent_end_date,
+      b.total_price,
+      b.status,
+      v.vehicle_name,
+      v.registration_number,
+      v.type
+    FROM bookings b
+    INNER JOIN vehicles v ON v.id = b.vehicle_id
+    WHERE b.customer_id = $1
+    ORDER BY b.id DESC
+  `;
+
+  const result = await pool.query(customerQuery, [parsedUserId]);
+  return result.rows.map((row) => ({
+    id: row.id,
+    vehicle_id: row.vehicle_id,
+    rent_start_date: formatDate(row.rent_start_date),
+    rent_end_date: formatDate(row.rent_end_date),
+    total_price: Number(row.total_price),
+    status: row.status,
+    vehicle: {
+      vehicle_name: row.vehicle_name,
+      registration_number: row.registration_number,
+      type: row.type,
+    },
+  }));
+};
+
 export const bookingServices = {
   createBooking,
+  getBookingsByRole,
 };
